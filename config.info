@@ -1,0 +1,16 @@
+nginx_config=Full path to Nginx config file,0
+add_to=File or directory for new virtual hosts,3,None (add to main config file)
+add_link=Directory for links to new virtual host files,3,None
+nginx_cmd=Full path to Nginx command,0
+start_cmd=Command to start Nginx,0
+stop_cmd=Command to stop Nginx,0
+apply_cmd=Command to apply Nginx configuration,0
+child_procs=Default number of PHP child processes,3,Virtualmin default
+php_socket=Connect Nginx to PHP processes with,1,1-Socket files,0-TCP connections
+php_fpm=Execute PHP scripts using,1,1-PHP FPM,0-FastCGI
+php_fpm_loc=Full path to default directory of php-fpm.d pools,0
+php_fpm_socks=Full path to default PHP-FPM socket directory,0
+fpm_start_cmd=Command to start PHP-FPM,0
+fpm_stop_cmd=Command to stop PHP-FPM,0
+fpm_apply_cmd=Command to apply PHP-FPM configuration,0
+extra_dirs=Additional Nginx directives for new virtual hosts,9,80,5,\t
