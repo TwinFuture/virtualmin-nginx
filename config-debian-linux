@@ -7,3 +7,4 @@ add_to=/etc/nginx/sites-available
 add_link=/etc/nginx/sites-enabled
 child_procs=4
 php_socket=1
+php_fpm=0

@@ -1,21 +1,24 @@
 #!/usr/bin/perl
 # Simple script to run a sub-process in a loop
-
+use strict;
+use warnings;
 use POSIX;
 
-$dead = 0;
+our $dead = 0;
+our $childpid = 0;
 
-$SIG{'TERM'} = sub { $dead = 1;
-		     if ($childpid) {
-			kill(TERM, $childpid);
+$SIG{'TERM'} = sub {
+		$dead = 1;
+		if ($childpid) {
+			kill('TERM', $childpid);
 			sleep(1);	# Give it time to clean up
-			kill(KILL, $childpid);
-		        }
-		     exit(1);
-		   };
+			kill('KILL', $childpid);
+		}
+		exit(1);
+	};
 
 while(!$dead) {
-	$start = time();
+	my $start = time();
 	$childpid = fork();
 	if ($childpid == 0) {
 		exec(@ARGV);
@@ -27,4 +30,3 @@ while(!$dead) {
 		sleep(5);
 		}
 	}
-

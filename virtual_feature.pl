@@ -173,7 +173,8 @@ if (!$d->{'alias'}) {
 		push(@{$server->{'members'}},
 			{ 'name' => 'listen',
 			  'words' => [ '['.$d->{'ip6'}.']'.$portstr,
-				       'default', 'ipv6only=on' ] });
+				       $d->{'virt6'} ? ( 'default' ) : ( ),
+				       'ipv6only=on' ] });
 		}
 	
 	# Add log files
@@ -467,7 +468,7 @@ if (!$d->{'alias'}) {
 		my $temp = &transname();
 		my $fh = "EXTRA";
 		&open_tempfile($fh, ">$temp", 0, 1);
-		&print_tempfile($fh, 
+		&print_tempfile($fh,
 			join("\n", split(/\t+/, $config{'extra_dirs'}))."\n");
 		&close_tempfile($fh);
 		my $econf = &read_config_file($temp);
@@ -1183,8 +1184,10 @@ else {
 				&open_lock_tempfile($fh, ">$dis");
 				&print_tempfile($fh, $msg);
 				&close_tempfile($fh);
+				no warnings "once";
 				&set_ownership_permissions(
 					undef, undef, 0644, $virtual_server::disabled_website);
+				use warnings "once";
 
 				# Add location to force use of it
 				if (!$clash) {
@@ -1868,19 +1871,22 @@ my $max_ltime = $start;
 foreach my $l (&unique(@logs)) {
 	foreach my $f (&virtual_server::all_log_files($l, $max_ltime)) {
 		local $_;
+		my $LOG;
 		if ($f =~ /\.gz$/i) {
-			open(LOG, "gunzip -c ".quotemeta($f)." |");
+			open($LOG, "<", "gunzip -c ".quotemeta($f)." |");
 			}
 		elsif ($f =~ /\.Z$/i) {
-			open(LOG, "uncompress -c ".quotemeta($f)." |");
+			open($LOG, "<", "uncompress -c ".quotemeta($f)." |");
 			}
 		else {
-			open(LOG, $f);
+			open($LOG, "<", $f);
 			}
-		while(<LOG>) {
-			if (/^(\S+)\s+(\S+)\s+(\S+)\s+\[(\d+)\/(\S+)\/(\d+):(\d+):(\d+):(\d+)\s+(\S+)\]\s+"([^"]*)"\s+(\S+)\s+(\S+)/ && $12 ne "206") {
+		while(<$LOG>) {
+			if (/^(\S+)\s+(\S+)\s+(\S+)\s+\[(\d+)\/(\S+)\/(\d+):(\d+):(\d+):(\d+)\s+(\S+)\]\s+"([^"]*)"\s+(\S+)\s+(\S+)/) {
 				# Valid-looking log line .. work out the time
+				no warnings "once";
 				my $ltime = timelocal($9, $8, $7, $4, $virtual_server::apache_mmap{lc($5)}, $6-1900);
+				use warnings "once";
 				if ($ltime > $start) {
 					my $day = int($ltime / (24*60*60));
 					$bwinfo->{"web_".$day} += $13;
@@ -1888,7 +1894,7 @@ foreach my $l (&unique(@logs)) {
 				$max_ltime = $ltime if ($ltime > $max_ltime);
 				}
 			}
-		close(LOG);
+		close($LOG);
 		}
 	}
 return $max_ltime;
@@ -2705,6 +2711,8 @@ if (!$config{'php_fpm'}) {
 
 # Fix broken PHP extension_dir directives
 &virtual_server::fix_php_extension_dir($d);
+# Re-check HTML dirs
+&virtual_server::find_html_cgi_dirs($d);
 
 if (!$config{'php_fpm'}) {
 	# Restart PHP server, in case php.ini got changed by the restore
@@ -3050,4 +3058,3 @@ return $l;
 }
 
 1;
-
